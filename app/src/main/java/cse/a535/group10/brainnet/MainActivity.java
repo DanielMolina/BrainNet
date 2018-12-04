@@ -5,12 +5,15 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.BatteryManager;
 import android.os.Environment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -52,8 +55,24 @@ public class MainActivity extends AppCompatActivity {
                     // TODO: load and send data to server
                     // TODO: keep track of battery change from before loading data until before displaying results, and latency
                     // TODO: might need to make separate activity or view (not sure) for results display page
+                    getBatteryStatus();
+                    final long start = System.currentTimeMillis();
+                    new UploadUtils(new OnEventListener<Boolean>() {
+                        @Override
+                        public void onSuccess(Boolean result) {
+                            if (result) {
+                                getBatteryStatus();
+                                long end = System.currentTimeMillis();
+                                long total = end - start;
+                                Log.d("Time", "Total time taken (ms): " + total);
+                            }
+                        }
 
-                    new UploadUtils.uploadFile().execute(csvDataPath);
+                        @Override
+                        public void onFailure(Exception e) {
+                            dataAlert(e.getMessage());
+                        }
+                    }).execute(csvDataPath);
                 } else {
                     dataAlert("Not .CSV File");
                 }
@@ -104,6 +123,17 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void getBatteryStatus() {
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = this.registerReceiver(null, ifilter);
+        if (batteryStatus != null) {
+            int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+            int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+            float batteryPct = level / (float) scale;
+            Log.d("batter level", String.valueOf(batteryPct));
+        }
     }
 }
 
