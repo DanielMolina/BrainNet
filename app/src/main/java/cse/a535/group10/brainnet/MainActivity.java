@@ -23,12 +23,11 @@ import java.io.File;
 public class MainActivity extends AppCompatActivity {
     public static final int PICK_CSV = 0;
 
-    /* method to create alert pop-up when data folder is not found*/
+    /* method to create alert pop-up when data folder is not found */
     protected void dataAlert(String msg) {
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setMessage(msg);
         builder.setCancelable(true);
-
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 dialog.cancel();
@@ -39,22 +38,24 @@ public class MainActivity extends AppCompatActivity {
         alert.show();
     }
 
+    /* user selects csv to test and is sent to server */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_CSV && resultCode == Activity.RESULT_OK) {
             if (data == null) {
-                //Display an error
                 System.out.println("Error Loading Data");
                 dataAlert("Error Loading Data");
             } else {
                 System.out.println("Data Selected");
-                String csvDataPath = data.getDataString();
-
-                if (csvDataPath.endsWith(".csv")) {
-                    // TODO: load and send data to server
-                    // TODO: keep track of battery change from before loading data until before displaying results, and latency
-                    // TODO: might need to make separate activity or view (not sure) for results display page
+                String csvDataPath = data.getData().getPath();
+                String [] pathParts = csvDataPath.split("/");
+                Bundle extras = this.getIntent().getExtras();
+                if (extras != null) {
+                    csvDataPath = extras.getString("storage") + pathParts[pathParts.length - 1];
+                }
+                System.out.println(csvDataPath);
+                if (csvDataPath.endsWith(".csv") && new File(csvDataPath).exists()) {
                     getBatteryStatus();
                     final long start = System.currentTimeMillis();
                     new UploadUtils(new OnEventListener<Boolean>() {
@@ -88,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CALENDAR)
                 != PackageManager.PERMISSION_GRANTED) {
             // Permission is not granted
+            dataAlert("Permission Not Granted");
         }
 
         final Button idButton = findViewById(R.id.idButton);
@@ -101,22 +103,28 @@ public class MainActivity extends AppCompatActivity {
                 if (Environment.getExternalStorageState() == null) {
                     System.out.println("No SD Card Found");
                     storagePath = Environment.getDataDirectory() + "/eegmmidb/";
+                    System.out.println(storagePath);
                     directory = new File(storagePath);
                     if (directory.exists()) {
                         Uri uri = Uri.parse(storagePath);
                         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                         intent.setDataAndType(uri, "*/*");
+                        intent.putExtra("storage", storagePath);
+                        setIntent(intent);
                         startActivityForResult(Intent.createChooser(intent, "Open"), PICK_CSV);
                     } else
                         dataAlert("EEG Data Folder Not Found");
                 } else {
                     System.out.println("SD Card Found");
                     storagePath = Environment.getExternalStorageDirectory().getPath() + "/eegmmidb/";
+                    System.out.println(storagePath);
                     directory = new File(storagePath);
                     if (directory.exists()) {
                         Uri uri = Uri.parse(storagePath);
                         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                         intent.setDataAndType(uri, "*/*");
+                        intent.putExtra("storage", storagePath);
+                        setIntent(intent);
                         startActivityForResult(Intent.createChooser(intent, "Open"), PICK_CSV);
                     } else
                         dataAlert("EEG Data Folder Not Found");
