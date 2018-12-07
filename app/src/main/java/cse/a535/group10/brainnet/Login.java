@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
 import android.widget.EditText;
 
 import java.io.File;
@@ -38,6 +39,18 @@ public class Login extends DialogFragment {
                     public void onClick(DialogInterface dialog, int id) {
                         String userID = edit.getText().toString();
                         if (userID.equals("S007")) {
+                            // display stimulus while "recording" eeg
+                            final Dialog settingsDialog = new Dialog(getContext());
+                            settingsDialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+                            settingsDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                                @Override
+                                public void onDismiss(DialogInterface dialogInterface) {
+                                    settingsDialog.cancel();
+                                }
+                            });
+                            settingsDialog.setContentView(getLayoutInflater().inflate(R.layout.popup_image, null));
+                            settingsDialog.show();
+
                             // check phone for "recorded" brain waves
                             File directory;
                             String storagePath;
@@ -55,9 +68,9 @@ public class Login extends DialogFragment {
                                     intent.putExtra("storage", storagePath);
                                     getActivity().setIntent(intent);
                                     getActivity().startActivityForResult(Intent.createChooser(intent, "Open"), PICK_CSV);
-                                } else
-                                    //System.out.println("Error");
+                                } else {
                                     dataAlert("EEG Data Folder Not Found");
+                                }
                             } else {
                                 System.out.println("SD Card Found");
                                 storagePath = Environment.getExternalStorageDirectory().getPath() + "/eegmmidb/";
@@ -70,8 +83,9 @@ public class Login extends DialogFragment {
                                     intent.putExtra("storage", storagePath);
                                     getActivity().setIntent(intent);
                                     getActivity().startActivityForResult(Intent.createChooser(intent, "Open"), PICK_CSV);
-                                } else
+                                } else {
                                     dataAlert("EEG Data Folder Not Found");
+                                }
                             }
                         } else {
                             dataAlert("Incorrect ID");

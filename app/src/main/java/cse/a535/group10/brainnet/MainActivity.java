@@ -37,10 +37,8 @@ public class MainActivity extends AppCompatActivity {
 
         Button idButton = findViewById(R.id.idButton);
         idButton.setOnClickListener(new View.OnClickListener() {
-            /* when clicked, the ID button on the main page will prompt the user to select EEG data
-             in .csv format from their SD card to test the model */
             public void onClick(View v) {
-                // allow user to log in and show stimulus image for X seconds
+                // allow user to log in
                 login();
             }
         });
